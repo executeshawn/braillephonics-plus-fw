@@ -1,32 +1,37 @@
 from smbus2 import SMBus
 import time
 
-TCA_ADDRESS = 0x70
-
 bus = SMBus(1)
 
-def select_channel(channel):
-    if channel < 0 or channel > 7:
-        raise ValueError("Channel must be 0-7")
+TCA_ADDRESSES = [0x70, 0x71]
 
-    bus.write_byte(TCA_ADDRESS, 1 << channel)
-    print(f"Channel {channel} selected")
-    time.sleep(0.1)
+def select_channel(tca_addr, channel):
+    bus.write_byte(tca_addr, 1 << channel)
+    time.sleep(0.05)
 
 def scan_bus():
-    print("Scanning I2C bus...")
-    for address in range(0x03, 0x77):
+    devices = []
+    for addr in range(0x03, 0x78):
         try:
-            bus.write_quick(address)
-            print(f"Device found at 0x{address:02X}")
+            bus.write_quick(addr)
+            devices.append(addr)
         except:
             pass
+    return devices
 
-# MAIN TEST
-for ch in range(8):
-    select_channel(ch)
-    scan_bus()
-    print("-" * 30)
-
-bus.close()
-
+for tca in TCA_ADDRESSES:
+    print(f"\nScanning TCA at 0x{tca:02X}")
+    for ch in range(8):
+        select_channel(tca, ch)
+        devices = scan_bus()
+        
+        # Remove multiplexer addresses
+        devices = [d for d in devices if d not in TCA_ADDRESSES]
+        
+        print(f" Channel {ch}: ", end="")
+        if devices:
+            for d in devices:
+                print(f"0x{d:02X} ", end="")
+        else:
+            print("No devices")
+        print()
