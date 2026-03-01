@@ -6,9 +6,9 @@ h = lgpio.gpiochip_open(0)
 lgpio.gpio_claim_output(h, HAPTIC_PIN)
 
 def vibrate(duration):
-    lgpio.gpio_write(h, HAPTIC_PIN, 1)
+    lgpio.gpio_write(h, HAPTIC_PIN, 1) # Turn on the haptic motor
     time.sleep(duration)
-    lgpio.gpio_write(h, HAPTIC_PIN, 0)
+    lgpio.gpio_write(h, HAPTIC_PIN, 0) # Turn off the haptic motor
 
 def success_feedback():
     vibrate(0.2)
