@@ -22,7 +22,8 @@ def set_pin(pin, state):
     lgpio.gpio_write(h, pin, state)
 
 def speak(text):
-    os.system(f'espeak "{text}"')
+    # -s 140 (slower), -p 70 (different pitch), -a 200 (louder)
+    os.system(f'espeak -s 140 -p 60 "{text}" &')
 
 def vibrate(duration):
     set_pin(HAPTIC, 1)
