@@ -1,53 +1,47 @@
 import time
 import board
 import busio
-from smbus2 import SMBus
+from adafruit_tca9548a import TCA9548A
 from adafruit_pn532.i2c import PN532_I2C
 
-# -----------------------------
-# TCA9548A configuration
-# -----------------------------
-TCA1_ADDR = 0x70
-TCA2_ADDR = 0x71
-CHANNEL = 0  # SD0/SC0
-
-def select_tca_channel(tca_addr, channel):
-    bus = SMBus(1)
-    bus.write_byte(tca_addr, 1 << channel)
-    bus.close()
-    time.sleep(0.2)
-
-# -----------------------------
-# Select TCA channel
-# -----------------------------
-print("Selecting TCA9548A channel...")
-
-select_tca_channel(TCA1_ADDR, CHANNEL)
-# If you want to test the second multiplexer:
-# select_tca_channel(TCA2_ADDR, CHANNEL)
-
-# -----------------------------
-# Initialize PN532
-# -----------------------------
-print("Initializing PN532...")
-
+# 1. Setup I2C (Assumes 10kHz baudrate is already set in /boot/config.txt)
 i2c = busio.I2C(board.SCL, board.SDA)
-pn532 = PN532_I2C(i2c, debug=False)
 
-ic, ver, rev, support = pn532.firmware_version
-print(f"PN532 Firmware: {ver}.{rev}")
+# 2. Define Multiplexers
+tca70 = TCA9548A(i2c, address=0x70)
+tca71 = TCA9548A(i2c, address=0x71)
 
-pn532.SAM_configuration()
+readers = []
 
+def init_readers(tca_device, label):
+    for ch in range(8):
+        print(f"Scanning {label} Channel {ch}...", end=" ", flush=True)
+        try:
+            # Create a virtual bus for this channel
+            channel_bus = tca_device[ch]
+            time.sleep(0.05) # Give the MUX a moment to switch
+            
+            # Attempt to initialize the PN532
+            # We wrap this in a retry because PN532s are notoriously slow to wake up
+            new_reader = None
+            for attempt in range(3):
+                try:
+                    new_reader = PN532_I2C(channel_bus, debug=False)
+                    break
+                except Exception:
+                    time.sleep(0.1)
+            
+            if new_reader:
+                new_reader.SAM_configuration()
+                readers.append(new_reader)
+                print("FOUND!")
+            else:
+                print("Not found.")
+        except Exception as e:
+            print(f"Error: {e}")
 
-print("Waiting for NFC card...")
+# Run initialization
+init_readers(tca70, "TCA 0x70")
+init_readers(tca71, "TCA 0x71")
 
-# -----------------------------
-# Read NFC Card
-# -----------------------------
-while True:
-    uid = pn532.read_passive_target(timeout=0.05)
-
-    if uid:
-        print("Card detected:", [hex(i) for i in uid])
-        time.sleep(1)
+print(f"\nTotal readers active: {len(readers)}")
