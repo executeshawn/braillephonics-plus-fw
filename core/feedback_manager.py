@@ -8,9 +8,10 @@ class FeedbackManager:
         self.haptic = haptic
         self.rgb = rgb
 
-    def correct(self, letter):
 
-        self.audio.speak(f"Correct. This is letter {letter}")
+    def letter_mode(self, letter):
+
+        self.audio.speak(f"Letter {letter}")
 
         self.haptic.vibrate(0.2)
         time.sleep(0.1)
@@ -19,6 +20,29 @@ class FeedbackManager:
         self.rgb.green_on()
         time.sleep(1)
         self.rgb.off()
+
+
+    def phonics_mode(self, letter):
+
+        self.audio.speak(letter)
+
+        self.haptic.vibrate(0.2)
+
+        self.rgb.green_on()
+        time.sleep(1)
+        self.rgb.off()
+
+
+    def word_mode(self, letter):
+
+        self.audio.speak(f"Tile {letter}")
+
+        self.haptic.vibrate(0.2)
+
+        self.rgb.green_on()
+        time.sleep(1)
+        self.rgb.off()
+
 
     def incorrect(self):
 
