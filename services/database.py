@@ -2,7 +2,7 @@ import sqlite3
 
 class Database:
 
-    def __init__(self, db_file="nfc_tags.db"):
+    def __init__(self, db_file="data/nfc_tags.db"):
         self.conn = sqlite3.connect(db_file)
         self.cursor = self.conn.cursor()
 
