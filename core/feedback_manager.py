@@ -8,6 +8,10 @@ class FeedbackManager:
         self.haptic = haptic
         self.rgb = rgb
 
+    def speak_letter(self, letter):
+
+        self.audio.speak(f"{letter}")
+
     def correct(self, letter):
 
         self.audio.speak(f"Correct. This is letter {letter}")

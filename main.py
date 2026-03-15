@@ -2,6 +2,9 @@ import board
 import busio
 import time
 
+from hardware.buttons import Buttons
+from hardware.mode_leds import ModeLEDs
+from core.mode_manager import ModeManager
 from hardware.tca_controller import TCAController
 from hardware.pn532_reader import PN532Reader
 from hardware.audio_amp import AudioAmp
@@ -14,6 +17,12 @@ from core.feedback_manager import FeedbackManager
 
 
 print("Starting BraillePhonics+")
+
+buttons = Buttons()
+mode_leds = ModeLEDs()
+mode_manager = ModeManager()
+
+mode_leds.set_mode(1)
 
 # Initialize I2C
 i2c = busio.I2C(board.SCL, board.SDA)
@@ -52,10 +61,28 @@ for ch in range(8):
 
 
 print("System ready")
+audio.speak("System ready")
 
 # Main loop
 while True:
 
+    # -------- MODE BUTTONS --------
+    if buttons.mode1_pressed():
+        mode_manager.set_mode(1)
+        mode_leds.set_mode(1)
+        audio.speak("Letter recognition mode")
+
+    if buttons.mode2_pressed():
+        mode_manager.set_mode(2)
+        mode_leds.set_mode(2)
+        audio.speak("Phonics practice mode")
+
+    if buttons.mode3_pressed():
+        mode_manager.set_mode(3)
+        mode_leds.set_mode(3)
+        audio.speak("Word formation mode")
+
+    # -------- NFC SCANNING --------
     for ch, reader in enumerate(readers):
 
         if reader is None:
@@ -70,7 +97,20 @@ while True:
             if symbol:
 
                 print(f"Reader {ch}: {symbol}")
-                feedback.correct(symbol)
+
+                mode = mode_manager.get_mode()
+
+                if mode == 1:
+                    audio.speak(f"Letter {symbol}")
+                    feedback.correct(symbol)
+
+                elif mode == 2:
+                    audio.speak(symbol)
+                    feedback.correct(symbol)
+
+                elif mode == 3:
+                    audio.speak(f"Tile {symbol}")
+                    feedback.correct(symbol)
 
             else:
 
