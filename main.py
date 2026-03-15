@@ -63,24 +63,42 @@ for ch in range(8):
 print("System ready")
 audio.speak("System ready")
 
+time.sleep(1.5)
+
+current_mode = mode_manager.get_mode()
+
+if current_mode == 1:
+    audio.speak("Letter recognition mode")
+
+elif current_mode == 2:
+    audio.speak("Phonics practice mode")
+
+elif current_mode == 3:
+    audio.speak("Word formation mode")
+
+last_mode = mode_manager.get_mode()
+
 # Main loop
 while True:
 
     # -------- MODE BUTTONS --------
-    if buttons.mode1_pressed():
+    if buttons.mode1_pressed() and last_mode != 1:
         mode_manager.set_mode(1)
         mode_leds.set_mode(1)
         audio.speak("Letter recognition mode")
+        last_mode = 1
 
-    if buttons.mode2_pressed():
+    if buttons.mode2_pressed() and last_mode != 2:
         mode_manager.set_mode(2)
         mode_leds.set_mode(2)
         audio.speak("Phonics practice mode")
+        last_mode = 2
 
-    if buttons.mode3_pressed():
+    if buttons.mode3_pressed() and last_mode != 3:
         mode_manager.set_mode(3)
         mode_leds.set_mode(3)
         audio.speak("Word formation mode")
+        last_mode = 3
 
     # -------- NFC SCANNING --------
     for ch, reader in enumerate(readers):
@@ -101,16 +119,13 @@ while True:
                 mode = mode_manager.get_mode()
 
                 if mode == 1:
-                    audio.speak(f"Letter {symbol}")
-                    feedback.correct(symbol)
+                    feedback.letter_mode(symbol)
 
                 elif mode == 2:
-                    audio.speak(symbol)
-                    feedback.correct(symbol)
+                    feedback.phonics_mode(symbol)
 
                 elif mode == 3:
-                    audio.speak(f"Tile {symbol}")
-                    feedback.correct(symbol)
+                    feedback.word_mode(symbol)
 
             else:
 
