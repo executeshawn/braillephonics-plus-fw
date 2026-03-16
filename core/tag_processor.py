@@ -1,3 +1,5 @@
+# core/tag_processor.py
+
 class TagProcessor:
 
     def __init__(self, database):

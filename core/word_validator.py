@@ -1,3 +1,5 @@
+# core/word_validator.py
+
 with open("data/words.txt") as f:
     valid_words = set(line.strip().upper() for line in f)
 

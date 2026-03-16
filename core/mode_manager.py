@@ -1,4 +1,5 @@
 # core/mode_manager.py
+
 from core.braille_grid import update_tile, get_full_word
 from core.word_checker import WordChecker
 
