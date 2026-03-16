@@ -1,4 +1,5 @@
 # core/braille_grid.py
+
 braille_grid = [[None]*4 for _ in range(4)]
 
 def update_tile(row, col, letter):
