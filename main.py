@@ -48,14 +48,12 @@ readers = []
 for ch in range(8):
 
     try:
-
         reader = PN532Reader(tca.channel(ch))
         readers.append(reader)
 
         print(f"Reader {ch} READY")
 
     except:
-
         readers.append(None)
         print(f"Reader {ch} FAILED")
 
@@ -63,7 +61,7 @@ for ch in range(8):
 print("System ready")
 audio.speak("System ready")
 
-time.sleep(1.5)
+time.sleep(2.5)
 
 current_mode = mode_manager.get_mode()
 
@@ -76,29 +74,46 @@ elif current_mode == 2:
 elif current_mode == 3:
     audio.speak("Word formation mode")
 
+# NFC memory filter (one UID per reader)
+last_seen_uid = [None] * 8
+
+
+# =========================
+# Main loop
+# =========================
 last_mode = mode_manager.get_mode()
 
-# Main loop
 while True:
 
     # -------- MODE BUTTONS --------
     if buttons.mode1_pressed() and last_mode != 1:
+
         mode_manager.set_mode(1)
         mode_leds.set_mode(1)
         audio.speak("Letter recognition mode")
-        last_mode = 1
 
-    if buttons.mode2_pressed() and last_mode != 2:
+        last_mode = 1
+        time.sleep(0.3)
+
+
+    elif buttons.mode2_pressed() and last_mode != 2:
+
         mode_manager.set_mode(2)
         mode_leds.set_mode(2)
         audio.speak("Phonics practice mode")
-        last_mode = 2
 
-    if buttons.mode3_pressed() and last_mode != 3:
+        last_mode = 2
+        time.sleep(0.3)
+
+
+    elif buttons.mode3_pressed() and last_mode != 3:
+
         mode_manager.set_mode(3)
         mode_leds.set_mode(3)
         audio.speak("Word formation mode")
+
         last_mode = 3
+        time.sleep(0.3)
 
     # -------- NFC SCANNING --------
     for ch, reader in enumerate(readers):
@@ -108,7 +123,15 @@ while True:
 
         uid = reader.read_tag()
 
-        if uid:
+        # Detect tile removal
+        if uid is None:
+            last_seen_uid[ch] = None
+            continue
+
+        # Detect new tile
+        if uid != last_seen_uid[ch]:
+
+            last_seen_uid[ch] = uid
 
             symbol = processor.process(uid)
 
@@ -132,4 +155,6 @@ while True:
                 print(f"Reader {ch}: Unknown tag")
                 feedback.incorrect()
 
-            time.sleep(1)
+            time.sleep(0.5)
+
+    time.sleep(0.05)

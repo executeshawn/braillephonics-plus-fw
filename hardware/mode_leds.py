@@ -4,7 +4,7 @@ class ModeLEDs:
 
     MODE1_LED = 5
     MODE2_LED = 6
-    MODE3_LED = 12
+    MODE3_LED = 13
 
     def __init__(self):
 

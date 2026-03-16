@@ -1,23 +1,18 @@
-import lgpio
+import gpiozero
 
 class Buttons:
 
-    MODE1 = 4
-    MODE2 = 17
-    MODE3 = 27
-
     def __init__(self):
 
-        self.h = lgpio.gpiochip_open(0)
-
-        for pin in [self.MODE1, self.MODE2, self.MODE3]:
-            lgpio.gpio_claim_input(self.h, pin)
+        self.mode1 = gpiozero.Button(4, pull_up=True, bounce_time=0.2)
+        self.mode2 = gpiozero.Button(17, pull_up=True, bounce_time=0.2)
+        self.mode3 = gpiozero.Button(27, pull_up=True, bounce_time=0.2)
 
     def mode1_pressed(self):
-        return lgpio.gpio_read(self.h, self.MODE1) == 1
+        return self.mode1.is_pressed
 
     def mode2_pressed(self):
-        return lgpio.gpio_read(self.h, self.MODE2) == 1
+        return self.mode2.is_pressed
 
     def mode3_pressed(self):
-        return lgpio.gpio_read(self.h, self.MODE3) == 1
+        return self.mode3.is_pressed
