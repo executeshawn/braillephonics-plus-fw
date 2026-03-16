@@ -7,7 +7,7 @@ class AudioAmp:
         subprocess.Popen([
             "espeak",
             "-s", "140",
-            "-p", "60",
+            "-p", "80",
             "-ven+f4",
             text
         ])
