@@ -1,3 +1,5 @@
+# tests/minirc522_test.py
+
 import spidev
 import lgpio
 import time

@@ -1,3 +1,5 @@
+# tests/amp_haptic_rgb_test.py
+
 import lgpio
 import time
 import os
