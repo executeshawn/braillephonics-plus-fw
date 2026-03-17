@@ -1,3 +1,5 @@
+# tests/haptic_test.py
+
 import lgpio
 import time
 
