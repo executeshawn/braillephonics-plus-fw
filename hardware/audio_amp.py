@@ -1,3 +1,5 @@
+# core/audio_amp.py
+
 import subprocess
 
 class AudioAmp:

@@ -1,3 +1,5 @@
+# core/haptic_driver.py
+
 import lgpio
 import time
 

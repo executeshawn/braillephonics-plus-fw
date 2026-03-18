@@ -1,3 +1,5 @@
+# core/mode_leds.py
+
 import lgpio
 
 class ModeLEDs:
