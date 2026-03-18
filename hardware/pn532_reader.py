@@ -1,3 +1,5 @@
+# core/pn532_reader.py
+
 from adafruit_pn532.i2c import PN532_I2C
 
 class PN532Reader:

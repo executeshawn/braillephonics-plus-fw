@@ -1,3 +1,5 @@
+# core/tca_controller.py
+
 from adafruit_tca9548a import TCA9548A
 
 class TCAController:
