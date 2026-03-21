@@ -29,7 +29,7 @@ def get_letter(uid):
 i2c = busio.I2C(board.SCL, board.SDA)
 
 tca1 = adafruit_tca9548a.TCA9548A(i2c, address=0x70)
-
+tca2 = adafruit_tca9548a.TCA9548A(i2c, address=0x71)
 # -----------------------------
 # Initialize Readers
 # -----------------------------
@@ -37,9 +37,14 @@ readers = []
 
 print("Initializing PN532 readers...")
 
-for ch in range(8):
+for ch in range(16):
     try:
-        pn532 = PN532_I2C(tca1[ch], debug=False)
+        if ch < 8:
+            i2c_channel = tca1[ch]
+        else:
+            i2c_channel = tca2[ch - 8]
+
+        pn532 = PN532_I2C(i2c_channel, debug=False)
         pn532.SAM_configuration()
 
         readers.append(pn532)
@@ -47,7 +52,7 @@ for ch in range(8):
 
     except Exception as e:
         readers.append(None)
-        print(f"Reader on Channel {ch} FAILED")
+        print(f"Reader on Channel {ch} FAILED: {e}")
 
 print("Initialization complete.")
 print("Waiting for NFC cards...\n")

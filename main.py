@@ -1,4 +1,3 @@
-# main.py
 import board
 import busio
 import time
@@ -12,11 +11,9 @@ from hardware.pn532_reader import PN532Reader
 from hardware.audio_amp import AudioAmp
 from hardware.haptic_driver import HapticDriver
 from hardware.rgb_led import RGBLed
-
 from services.database import Database
 from core.tag_processor import TagProcessor
 from core.feedback_manager import FeedbackManager
-
 
 print("Starting BraillePhonics+")
 
@@ -33,26 +30,39 @@ rgb = RGBLed()
 
 feedback = FeedbackManager(audio, haptic, rgb)
 
-# Mode Manager (inject FeedbackManager)
+# Mode Manager
 mode_manager = ModeManager(feedback)
 
-# Initialize I2C for multiplexer
+# ----------------------------
+# I2C + TCA (UPDATED FOR 16)
+# ----------------------------
 i2c = busio.I2C(board.SCL, board.SDA)
-tca = TCAController(i2c)
 
-# Database
+# Two multiplexers (IMPORTANT: different addresses)
+tca1 = TCAController(i2c, address=0x70)  # Default
+tca2 = TCAController(i2c, address=0x71)  # A0 = HIGH
+
+# ----------------------------
+# Database + Processing
+# ----------------------------
 db = Database()
-
-# Tag processor
 processor = TagProcessor(db)
 
-# Initialize NFC readers (8 channels for 1st TCA)
+# ----------------------------
+# Initialize 16 NFC Readers
+# ----------------------------
 readers = []
-for ch in range(8):
+
+for ch in range(16):
     try:
-        reader = PN532Reader(tca.channel(ch))
+        if ch < 8:
+            reader = PN532Reader(tca1.channel(ch))
+        else:
+            reader = PN532Reader(tca2.channel(ch - 8))
+
         readers.append(reader)
         print(f"Reader {ch} READY")
+
     except Exception as e:
         readers.append(None)
         print(f"Reader {ch} FAILED: {e}")
@@ -61,7 +71,9 @@ print("System ready")
 audio.speak("System ready")
 time.sleep(2.5)
 
-# Set initial mode
+# ----------------------------
+# Initial Mode Setup
+# ----------------------------
 current_mode = mode_manager.get_mode()
 mode_leds.set_mode(current_mode)
 
@@ -72,11 +84,13 @@ elif current_mode == 2:
 elif current_mode == 3:
     audio.speak("Angeli Mode")
 
-# NFC memory filter (to track last seen UID per reader)
-last_seen_uid = [None] * 8
+# ----------------------------
+# NFC Memory Tracking (UPDATED)
+# ----------------------------
+last_seen_uid = [None] * 16
 
 # ----------------------------
-# Main loop
+# Main Loop
 # ----------------------------
 last_mode = current_mode
 
@@ -112,42 +126,43 @@ while True:
 
         uid = reader.read_tag()
 
-        # Detect tile removal
+        # Tile removed
         if uid is None:
             last_seen_uid[ch] = None
             continue
 
-        # Detect new tile
+        # New tile detected
         if uid != last_seen_uid[ch]:
             last_seen_uid[ch] = uid
 
-            symbol = processor.process(uid)  # Convert UID to letter
+            symbol = processor.process(uid)
 
             if symbol:
                 print(f"Reader {ch}: {symbol}")
 
                 mode = mode_manager.get_mode()
 
+                # ----------------------------
+                # MODE 1 & 2
+                # ----------------------------
                 if mode in [1, 2]:
-                    # Letter or Phonics mode
+
                     if mode == 1:
                         feedback.letter_mode(symbol)
                     else:
                         feedback.phonics_mode(symbol)
 
+                # ----------------------------
+                # MODE 3 (4x4 GRID)
+                # ----------------------------
                 elif mode == 3:
-                    # Word Formation Mode
-                    row = ch // 4  # 0 or 1
-                    col = ch % 4   # 0-3
 
-                    # Place tile and get current word + validity
-                    word, valid = mode_manager.handle_tile_placement(row, col, symbol)
+                    row = ch // 4   # 0–3
+                    col = ch % 4    # 0–3
 
-                    # --- NEW UPDATE ---
-                    # Speak each tile as the word grows
-                    # FeedbackManager already handles audio, haptic, and LED
-                    # This ensures kid-friendly pronunciation per tile
-                    #mode_manager.feedback.word_mode(word, valid)
+                    word, valid = mode_manager.handle_tile_placement(
+                        row, col, symbol
+                    )
 
                     print(f"Current Word: {word}, Valid: {valid}")
 
@@ -155,8 +170,8 @@ while True:
                 print(f"Reader {ch}: Unknown tag")
                 feedback.incorrect()
 
-            # Small delay after detection
+            # Debounce delay
             time.sleep(0.5)
 
-    # Short loop delay
+    # Loop delay
     time.sleep(0.05)
